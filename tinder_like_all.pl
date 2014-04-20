@@ -8,14 +8,16 @@ use Time::HiRes qw(usleep);
 #use POSIX qw(strftime);
 #use Getopt::Long;
 
-my $TINDER_TOKEN = "x";
-my $XAUTHTOKEN = "x";
-my $TINDER_ID = "x";
+my $XAUTHTOKEN = "3680d5b4-9c7b-4b52-baef-05053b743d61";
+my $LAST_ETAG = "-1300089360";
+my $LAST_MODIFIED_SINCE = "Sat, 19 Apr 2014 22:54:17 GMT+00:00";
 
-my $LAST_ETAG = "x";
-my $LAST_MODIFIED_SINCE = "x";
+my $FACEBOOK_AUTH_TOKEN = "";
+my $FACEBOOK_AUTH_SECRET = "";
 
-die if !$TINDER_ID || !$XAUTHTOKEN || !$TINDER_TOKEN;
+die if !$LAST_ETAG || !$XAUTHTOKEN || !$LAST_MODIFIED_SINCE;
+
+$SIG{'INT'} = 'exit_handler';
 
 #main function
 while (1) {
@@ -53,7 +55,7 @@ sub set_like_curl() {
     $request_header{'Accept-Encoding'} = "gzip";
 
     #To Check TBD
-    $request_header{'X-Auth-Token'} = "3680d5b4-9c7b-4b52-baef-05053b743d61";
+    $request_header{'X-Auth-Token'} = $XAUTHTOKEN;
 
     my %example_get_call = %{&generic_curl("1", "https://api.gotinder.com/like/$match_id",\%request_header,)};
 
@@ -149,15 +151,17 @@ sub get_forty() {
     $request_header{'Connection'} = "Keep-Alive";
     $request_header{'Accept-Encoding'} = "gzip";
     $request_header{'Content-Length'} = "12";
+    $request_header{'If-None-Match'} = $LAST_ETAG;
+    $request_header{'If-Modified-Since'} = $LAST_MODIFIED_SINCE;
     
     #check below TBD
-    $request_header{'X-Auth-Token'} = "3680d5b4-9c7b-4b52-baef-05053b743d61";
-    $request_header{'If-None-Match'} = "-1300089360";
-    $request_header{'If-Modified-Since'} = "Sat, 19 Apr 2014 22:54:17 GMT+00:00";
+    $request_header{'X-Auth-Token'} = $XAUTHTOKEN;
 
     my %example_get_call = %{&generic_curl("0", "https://api.gotinder.com/user/recs",\%request_header,"{\"limit\":40}")};
 
     if($example_get_call{'code'} eq "0") {
+        $LAST_ETAG = $example_get_call{'ETag'};
+        $LAST_MODIFIED_SINCE = $example_get_call{'Date'};
         return $example_get_call{'response_body'};
     } else {
         die "get_forty() failed\n";
@@ -172,6 +176,14 @@ sub indian_people_filter() {
     #Graph search 'Pages liked by women from India who live in Ontario'
     #Get Page_id's of everything 'indian'
     #Filter from response.json and return specific tinder_id's
+}
+
+sub exit_handler {
+    #Print final last_etag, last_modified_since. final xauthtoken
+    print "\n";
+    print "LAST_ETAG is $LAST_ETAG\n";
+    print "LAST_MODIFIED_SINCE is $LAST_MODIFIED_SINCE\n";
+    exit 0;
 }
 
 exit 0;
