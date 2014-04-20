@@ -21,24 +21,47 @@ die if !$TINDER_ID || !$XAUTHTOKEN || !$TINDER_TOKEN;
 while (1) {
     my $json_response = &get_forty();
     my @match_ids = &strip_json($json_response);
-    &like_all(@match_ids);
+    &like_all(\@match_ids);
     print "Sleeping 5 seconds\n";
     sleep 5;
     undef $json_response;
     undef @match_ids;
-    exit;
 }
 
 sub like_all() {
     my $match_ids = shift;
     my $match_id;
     foreach $match_id (@$match_ids) {
-        print "sleeping\n";
-        #set_like_curl($match_id);
+        print "Liking tinder_id:$match_id..\n";
+        &set_like_curl($match_id);
         usleep(750000);
     }
-    undef @match_ids;
+    undef $match_ids;
     undef $match_id;
+}
+
+sub set_like_curl() {
+    my $match_id = shift;
+    my %request_header = ();
+    #Almost constant.
+    $request_header{'app_version'} = "632";
+    $request_header{'platform'} = "android";
+    $request_header{'User-Agent'} = "Tinder Android Version 2.2.2";
+    $request_header{'os_version'} = "19";
+    $request_header{'Host'} = "api.gotinder.com";
+    $request_header{'Connection'} = "Keep-Alive";
+    $request_header{'Accept-Encoding'} = "gzip";
+
+    #To Check TBD
+    $request_header{'X-Auth-Token'} = "3680d5b4-9c7b-4b52-baef-05053b743d61";
+
+    my %example_get_call = %{&generic_curl("1", "https://api.gotinder.com/like/$match_id",\%request_header,)};
+
+    if(!($example_get_call{'code'} eq "0")) {
+        die "set_like_curl() for $match_id failed.\n";
+    }
+    undef %example_get_call;
+    undef %request_header;
 }
 
 sub strip_json {
@@ -116,6 +139,7 @@ sub generic_curl() {
 
 sub get_forty() {
     my %request_header = ();
+    #Almost constant.
     $request_header{'app_version'} = "632";
     $request_header{'platform'} = "android";
     $request_header{'User-Agent'} = "Tinder Android Version 2.2.2";
@@ -125,10 +149,12 @@ sub get_forty() {
     $request_header{'Connection'} = "Keep-Alive";
     $request_header{'Accept-Encoding'} = "gzip";
     $request_header{'Content-Length'} = "12";
+    
     #check below TBD
     $request_header{'X-Auth-Token'} = "3680d5b4-9c7b-4b52-baef-05053b743d61";
     $request_header{'If-None-Match'} = "-1300089360";
     $request_header{'If-Modified-Since'} = "Sat, 19 Apr 2014 22:54:17 GMT+00:00";
+
     my %example_get_call = %{&generic_curl("0", "https://api.gotinder.com/user/recs",\%request_header,"{\"limit\":40}")};
 
     if($example_get_call{'code'} eq "0") {
@@ -141,7 +167,11 @@ sub get_forty() {
 }
 
 sub indian_people_filter() {
-
+    #TBD
+    #Graph search 'Pages liked by women from India'
+    #Graph search 'Pages liked by women from India who live in Ontario'
+    #Get Page_id's of everything 'indian'
+    #Filter from response.json and return specific tinder_id's
 }
 
 exit 0;
