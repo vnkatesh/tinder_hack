@@ -7,7 +7,6 @@ use LWP::UserAgent;
 use Time::HiRes qw(usleep);
 #use POSIX qw(strftime);
 #use Getopt::Long;
-#
 
 my $TINDER_TOKEN = "x";
 my $XAUTHTOKEN = "x";
@@ -18,15 +17,29 @@ my $LAST_MODIFIED_SINCE = "x";
 
 die if !$TINDER_ID || !$XAUTHTOKEN || !$TINDER_TOKEN;
 
-print "Hello all\n";
+#main function
+while (1) {
+    my $json_response = &get_forty();
+    my @match_ids = &strip_json($json_response);
+    &like_all(@match_ids);
+    print "Sleeping 5 seconds\n";
+    sleep 5;
+    undef $json_response;
+    undef @match_ids;
+    exit;
+}
 
-#my $json_response;
-#{
-#    local $/; #Enable 'slurp' mode
-#    open my $fh, "<", "response.json";
-#    $json_response = <$fh>;
-#    close $fh;
-#}
+sub like_all() {
+    my $match_ids = shift;
+    my $match_id;
+    foreach $match_id (@$match_ids) {
+        print "sleeping\n";
+        #set_like_curl($match_id);
+        usleep(750000);
+    }
+    undef @match_ids;
+    undef $match_id;
+}
 
 sub strip_json {
     my $json_data = decode_json(shift);
@@ -35,27 +48,9 @@ sub strip_json {
     foreach $result (@{$json_data->{'results'}}) {
         push(@match_ids, $result->{'_id'});
     }
+    undef $json_data;
+    undef $result;
     return @match_ids;
-}
-##
-while (1) {
-    my $json_response = &get_forty();
-    print "Response\n\n".$json_response."\n\n\n\n";
-    my @match_ids = &strip_json($json_response);
-    print $match_ids[1]."\n";
-# like_all(@match_ids);
-    print "Sleeping 10 seconds\n";
-    sleep 10;
-    exit;
-}
-#
-sub like_all() {
-    my @match_ids = shift;
-    my $match_id;
-    foreach $match_id (@match_ids) {
-        #set_like_curl($match_id);
-        usleep(750);
-    }
 }
 
 sub generic_curl() {
@@ -68,9 +63,6 @@ sub generic_curl() {
 
     my %response_headers = ();
 
-    print ref($request_header)."\n";
-    print dump($request_header)."\n";
-
     if($is_get eq "1") {
         my $req = HTTP::Request->new(GET => $query);
         foreach (keys %{$request_header}) { 
@@ -81,7 +73,7 @@ sub generic_curl() {
             my $message = $resp->decoded_content;
             $response_headers{'response_body'} = $message;
             $response_headers{'code'} = "0";
-            #print dump($resp->headers())."\n";
+            undef $message;
         }
         else {
             print "HTTP GET error code: ", $resp->code, "\n";
@@ -89,6 +81,8 @@ sub generic_curl() {
             $response_headers{'response_body'} = "";
             $response_headers{'code'} = "404";
         }
+        undef $resp;
+        undef $req;
     } else {
         #post
         my $req = HTTP::Request->new(POST => $query);
@@ -101,6 +95,7 @@ sub generic_curl() {
             my $message = $resp->decoded_content;
             $response_headers{'response_body'} = $message;
             $response_headers{'code'} = "0";
+            undef $message;
         }
         else {
             print "HTTP POST error code: ", $resp->code, "\n";
@@ -108,7 +103,14 @@ sub generic_curl() {
             $response_headers{'response_body'} = "";
             $response_headers{'code'} = "404";
         }
+        undef $resp;
+        undef $req;
     }
+    undef $is_get;
+    undef $query;
+    undef $request_header;
+    undef $request_body;
+    undef $ua;
     return \%response_headers;
 }
 
@@ -134,8 +136,12 @@ sub get_forty() {
     } else {
         die "get_forty() failed\n";
     }
+    undef %example_get_call;
+    undef %request_header;
 }
-#
-# #set_like_curl and get_forty both use generic_curl
-#
+
+sub indian_people_filter() {
+
+}
+
 exit 0;
