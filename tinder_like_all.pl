@@ -5,12 +5,11 @@ use Data::Dump qw(dump);
 use JSON;
 use LWP::UserAgent;
 use Time::HiRes qw(usleep);
-#use POSIX qw(strftime);
 #use Getopt::Long;
 
-my $XAUTHTOKEN = "3680d5b4-9c7b-4b52-baef-05053b743d61";
-my $LAST_ETAG = "1979137191";
-my $LAST_MODIFIED_SINCE = "Mon, 21 Apr 2014 02:17:41 GMT";
+my $XAUTHTOKEN = "";
+my $LAST_ETAG = "-2026977859";
+my $LAST_MODIFIED_SINCE = "Mon, 21 Apr 2014 02:36:34 GMT";
 
 my $DEBUG = 1;
 
@@ -32,7 +31,7 @@ while (1) {
     #Get Latest recommendations, limit by 40.
     my $json_response = &get_forty();
     if($DEBUG) {
-        print "Json_response\n";
+        print DEBUGFILE "Json_response\n";
         print DEBUGFILE $json_response;
         print DEBUGFILE "\n\n";
     }
@@ -75,7 +74,7 @@ sub set_like_curl() {
     my %example_get_call = %{&generic_curl("1", "https://api.gotinder.com/like/$match_id",\%request_header,)};
 
     if($DEBUG) {
-        print "set_like_curl $match_id\n";
+        print DEBUGFILE "set_like_curl $match_id\n";
         print DEBUGFILE $example_get_call{'response_body'};
         print DEBUGFILE "\n\n";
     }
@@ -188,7 +187,9 @@ sub get_forty() {
         if(defined($example_get_call{'ETag'}) && defined($example_get_call{'Date'})) {
             $LAST_ETAG = $example_get_call{'ETag'};
             $LAST_MODIFIED_SINCE = $example_get_call{'Date'};
-            print "Set new ETAG, LAST_MODIFIED_SINCE as $LAST_ETAG, $LAST_MODIFIED_SINCE\n";
+            if($DEBUG) {
+                print DEBUGFILE "Set new ETAG, LAST_MODIFIED_SINCE as $LAST_ETAG, $LAST_MODIFIED_SINCE\n";
+            }
         }
         return $example_get_call{'response_body'};
     } else {
