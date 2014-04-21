@@ -7,9 +7,9 @@ use LWP::UserAgent;
 use Time::HiRes qw(usleep);
 #use Getopt::Long;
 
-my $XAUTHTOKEN = "";
-my $LAST_ETAG = "-2026977859";
-my $LAST_MODIFIED_SINCE = "Mon, 21 Apr 2014 02:36:34 GMT";
+my $XAUTHTOKEN = "xxxxxxxxxxxxxxxxxxxxxxxxxxxx"; #FILL IN YOUR VALUE HERE
+my $LAST_ETAG = "-1022732152";
+my $LAST_MODIFIED_SINCE = "Mon, 21 Apr 2014 04:48:31 GMT";
 
 my $DEBUG = 1;
 
@@ -34,6 +34,10 @@ while (1) {
         print DEBUGFILE "Json_response\n";
         print DEBUGFILE $json_response;
         print DEBUGFILE "\n\n";
+    }
+    if($json_response =~ /recs\ exhausted/ || $json_response =~ /recs\ timeout/) {
+        print "Exhausted list of recommendations. Sleeping for 1800 seconds\n";
+        sleep 1800;
     }
     #Strip response Json and Get array of Tinder_ids.
     my @match_ids = &strip_json($json_response);
