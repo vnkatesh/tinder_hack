@@ -9,21 +9,38 @@ use Time::HiRes qw(usleep);
 #use Getopt::Long;
 
 my $XAUTHTOKEN = "3680d5b4-9c7b-4b52-baef-05053b743d61";
-my $LAST_ETAG = "-1300089360";
-my $LAST_MODIFIED_SINCE = "Sat, 19 Apr 2014 22:54:17 GMT+00:00";
+my $LAST_ETAG = "1979137191";
+my $LAST_MODIFIED_SINCE = "Mon, 21 Apr 2014 02:17:41 GMT";
 
+my $DEBUG = 1;
+
+if($DEBUG) {
+    open (DEBUGFILE, '>debug.txt');
+}
+
+#Somehow this is not being used.
 my $FACEBOOK_AUTH_TOKEN = "";
 my $FACEBOOK_AUTH_SECRET = "";
 
 die if !$LAST_ETAG || !$XAUTHTOKEN || !$LAST_MODIFIED_SINCE;
 
+#Use sigint trap to print out last set etag and if-modified-since. This should be updated in the code after every run.
 $SIG{'INT'} = 'exit_handler';
 
 #main function
 while (1) {
+    #Get Latest recommendations, limit by 40.
     my $json_response = &get_forty();
+    if($DEBUG) {
+        print "Json_response\n";
+        print DEBUGFILE $json_response;
+        print DEBUGFILE "\n\n";
+    }
+    #Strip response Json and Get array of Tinder_ids.
     my @match_ids = &strip_json($json_response);
+    #Like Each of the Tinder_id, one by one
     &like_all(\@match_ids);
+    #Sleep because you dont want to overwhelm the server - And is a good place to Ctrl-C
     print "Sleeping 5 seconds\n";
     sleep 5;
     undef $json_response;
@@ -53,11 +70,15 @@ sub set_like_curl() {
     $request_header{'Host'} = "api.gotinder.com";
     $request_header{'Connection'} = "Keep-Alive";
     $request_header{'Accept-Encoding'} = "gzip";
-
-    #To Check TBD
     $request_header{'X-Auth-Token'} = $XAUTHTOKEN;
 
     my %example_get_call = %{&generic_curl("1", "https://api.gotinder.com/like/$match_id",\%request_header,)};
+
+    if($DEBUG) {
+        print "set_like_curl $match_id\n";
+        print DEBUGFILE $example_get_call{'response_body'};
+        print DEBUGFILE "\n\n";
+    }
 
     if(!($example_get_call{'code'} eq "0")) {
         die "set_like_curl() for $match_id failed.\n";
@@ -120,6 +141,12 @@ sub generic_curl() {
             my $message = $resp->decoded_content;
             $response_headers{'response_body'} = $message;
             $response_headers{'code'} = "0";
+            if(defined $resp->header('ETag')){
+                $response_headers{'ETag'} = $resp->header('ETag');
+            }
+            if(defined $resp->header('Date')){
+                $response_headers{'Date'} = $resp->header('Date');
+            }
             undef $message;
         }
         else {
@@ -153,15 +180,16 @@ sub get_forty() {
     $request_header{'Content-Length'} = "12";
     $request_header{'If-None-Match'} = $LAST_ETAG;
     $request_header{'If-Modified-Since'} = $LAST_MODIFIED_SINCE;
-    
-    #check below TBD
     $request_header{'X-Auth-Token'} = $XAUTHTOKEN;
 
     my %example_get_call = %{&generic_curl("0", "https://api.gotinder.com/user/recs",\%request_header,"{\"limit\":40}")};
 
     if($example_get_call{'code'} eq "0") {
-        $LAST_ETAG = $example_get_call{'ETag'};
-        $LAST_MODIFIED_SINCE = $example_get_call{'Date'};
+        if(defined($example_get_call{'ETag'}) && defined($example_get_call{'Date'})) {
+            $LAST_ETAG = $example_get_call{'ETag'};
+            $LAST_MODIFIED_SINCE = $example_get_call{'Date'};
+            print "Set new ETAG, LAST_MODIFIED_SINCE as $LAST_ETAG, $LAST_MODIFIED_SINCE\n";
+        }
         return $example_get_call{'response_body'};
     } else {
         die "get_forty() failed\n";
@@ -183,6 +211,7 @@ sub exit_handler {
     print "\n";
     print "LAST_ETAG is $LAST_ETAG\n";
     print "LAST_MODIFIED_SINCE is $LAST_MODIFIED_SINCE\n";
+    close(DEBUGFILE);
     exit 0;
 }
 
