@@ -1,4 +1,4 @@
-####Personal notes and blogpost here
+####Personal notes and blogpost
 http://blog.venkatesh.ca/automating-tinder
 
 ####Technical documentation & bugs below
@@ -6,4 +6,4 @@ http://blog.venkatesh.ca/automating-tinder
 1. I accidentally committed my x-auth-token before. Don't worry, I've removed it and reset my account :)
 1. Not newbie friendly. You might have to understand the code if you ever plan on running this.
 1. Not my best code, coding effort was less than 5 hours in total, definitely would have a lot of bugs if you look for them. This is just proof-of-concept.
-1. Use [mitmproxy](http://mitmproxy.org/) to capture initial X-Auth-Token and ETAG/If-Modified-Since. A great tutorial on mitmproxy is [here](http://blog.philippheckel.com/2013/07/01/how-to-use-mitmproxy-to-read-and-modify-https-traffic-of-your-phone/)
+1. Use [mitmproxy](http://mitmproxy.org/) to capture initial X-Auth-Token and ETAG/If-Modified-Since. A great tutorial on mitmproxy is [here](http://blog.philippheckel.com/2013/07/01/how-to-use-mitmproxy-to-read-and-modify-https-traffic-of-your-phone/). Another reason I do this is because the top-of-stack of recommendations are the ones that have swiped-right you (Tinder logic) And my code does not handle if a match has occured...
